@@ -7,7 +7,10 @@ import json
 
 path_to_scRNAseq_data = './input/medians.csv'
 path_to_selected_channels = './input/Channels_genes_(correspondance_channels)_v2.csv'
-path_to_BBP_mtype_list = './input/'
+path_to_BBP_m_type_list = './input/BBP_mtype_list.csv'
+
+path_to_inh_map_L1 = './input/P(BBPmarker_metype)_L1_(Gouw+pseq_BBP)April_16_2021.csv'
+path_to_inh_map_L26 = './input/P(BBPmarker_metype)_L26_(Gouw+pseq_BBP)April_16_2021.csv'
 
 
 def unique_element(array):
@@ -100,44 +103,24 @@ def compute_default_distribution_file(Binary_df):
         index = Binary_df.index)
     return Distribution_df
 
-if __name__ == "__main__":
-    
-    medians = pd.read_csv(path_to_scRNAseq_data, index_col=0)
-    Channels_genes = pd.read_csv(path_to_selected_channels, index_col = 'gene_symbol')
-    msk_genes = [g in Channels_genes.index.tolist() for g in medians.index]
-    X_df = medians.T[medians.index[msk_genes]]
-    
-    Xnrn_df = preprocess_X_df(X_df)[0]
-    
-    Binary_0thresh_df = make_binary_0thresh(Xnrn_df)
-    
-    Distribution_df = pd.DataFrame(
-        np.asarray([['uniform']*len(Binary_0thresh_df.columns)]*len(Binary_0thresh_df.index)),
-        columns = Binary_0thresh_df.columns,
-        index = Binary_0thresh_df.index)
-    Distribution_df
+def compute_IC_data(Binary_df, Distribution_df):
     
     IC_data = {}
-    for ttype in Binary_1Perc_df.index:
-        df = pd.concat([Binary_0thresh_df.T[ttype], 
+    for ttype in Binary_df.index:
+        df = pd.concat([Binary_df.T[ttype], 
                          Distribution_df.T[ttype], 
                          Distribution_df.T[ttype], 
                          Distribution_df.T[ttype]], 
                         axis=1)
         df.columns = ['presence', 'dendrites distribution', 'axon distribution', 'soma distribution']
-        df.rename(Channels_genes['Channel'].T, axis=1)
+#         df.rename(Channels_genes['Channel'].T, axis=1) # if you want to have protein names instead of channel symbols
         IC_data[ttype] = {'values': df.values.tolist(), 'index': df.index.tolist(), 'columns': df.columns.tolist()}
-        
-
-    with open('./output/t_types_IC_expression.json', 'w') as fp:
-        json.dump(df_collection, fp)
-        
     
-    ttype_list = [x for x in IC_data.keys()]
-    subclass_list = unique_element([x.split('_')[0] for x in IC_data.keys()])
+    return IC_data
 
-    df = pd.read_table("/Users/yroussel/Desktop/morph-release-2020-08-10/neurondb.dat", sep=" ", names=['Layer', 'm-type'], index_col=0)
-    BBP_mtypes = unique_element(df['m-type'].values)
+def compute_default_exc_map(path_to_BBP_m_type_list, ttype_list):
+    df = pd.read_csv(path_to_BBP_m_type_list, index_col=0)
+    BBP_mtypes = df['m-type'].values
     msk_exc_bbp = np.asarray([('TPC' in x)|('BPC' in x)|('UPC' in x)|('IPC' in x)|('SSC' in x)|('HPC' in x)
                               for x in BBP_mtypes])
     
@@ -160,8 +143,46 @@ if __name__ == "__main__":
             ttype_match += np.asarray(ttype_list)[msk_tmp].tolist()
         ttype_match = unique_element(np.asarray(ttype_match))
         map_exc_ttype [mtype] = ttype_match.tolist()
+        
+    return map_exc_ttype
+
+def make_inh_map_binary(path_to_inh_map_L1, path_to_inh_map_L26):
     
-    with open('/output/map_exc_ttype.json', 'w') as fp:
+    map_inh_ttype_L1 = pd.read_csv(path_to_inh_map_L1, index_col=0)
+    map_inh_ttype_L26 = pd.read_csv(path_to_inh_map_L26, index_col=0)
+    map_inh_ttype_L26 = map_inh_ttype_L26.reindex(['Vip', 'Lamp5', 'Pvalb', 'Sst', 'Sncg', 'Serpinf1'])
+
+    map_inh_ttype = pd.concat([map_inh_ttype_L1, map_inh_ttype_L26], axis=1, sort=True).fillna(0)
+    map_inh_ttype_binary = pd.DataFrame(np.where(map_inh_ttype>0., 1, 0),
+                                         index = map_inh_ttype.index,
+                                         columns = map_inh_ttype.columns)
+    return map_inh_ttype_binary
+
+if __name__ == "__main__":
+    
+    medians = pd.read_csv(path_to_scRNAseq_data, index_col=0)
+    Channels_genes = pd.read_csv(path_to_selected_channels, index_col = 'gene_symbol')
+    msk_genes = [g in Channels_genes.index.tolist() for g in medians.index]
+    X_df = medians.T[medians.index[msk_genes]]
+    
+    Xnrn_df = preprocess_X_df(X_df)[0]
+    
+    Binary_0thresh_df = make_binary_0thresh(Xnrn_df)
+    
+    Distribution_df = compute_default_distribution_file(Binary_0thresh_df)
+    
+    IC_data = compute_IC_data(Binary_0thresh_df, Distribution_df)
+
+    with open('./output/t_types_IC_expression.json', 'w') as fp:
+        json.dump(IC_data, fp)
+        
+    
+    ttype_list = [x for x in IC_data.keys()]
+    subclass_list = unique_element([x.split('_')[0] for x in IC_data.keys()])
+
+    map_exc_ttype = compute_default_exc_map(path_to_BBP_m_type_list, ttype_list)
+    
+    with open('./output/map_exc_ttype.json', 'w') as fp:
         json.dump(map_exc_ttype, fp)
     
     compatible_profiles = {}
@@ -171,19 +192,10 @@ if __name__ == "__main__":
             df = generate_panda(IC_data, ttype)
             compatible_profiles[m_type][ttype] = {'values': df.values.tolist(), 'index': df.index.tolist(), 'columns': df.columns.tolist()}
             
-    with open('/Users/yroussel/Desktop/NCMv3/exc_compatible_profiles.json', 'w') as fp:
+    with open('./output/exc_compatible_profiles.json', 'w') as fp:
         json.dump(compatible_profiles, fp)
     
-    
-    map_inh_ttype_L26 = pd.read_csv('/Users/yroussel/Desktop/NCMv3/P(BBPmarker_metype)_L26_(Gouw+pseq_BBP)April_16_2021.csv', index_col=0)
-    map_inh_ttype_L26 = map_inh_ttype.reindex(['Vip', 'Lamp5', 'Pvalb', 'Sst', 'Sncg', 'Serpinf1'])
-
-    map_inh_ttype_L1 = pd.read_csv('/Users/yroussel/Desktop/NCMv3/P(BBPmarker_metype)_L1_(Gouw+pseq_BBP)April_16_2021.csv', index_col=0)
-
-    map_inh_ttype = pd.concat([map_inh_ttype_L1, map_inh_ttype_L26], axis=1).fillna(0)
-    map_inh_ttype_binary = pd.DataFrame(np.where(map_inh_ttype>0., 1, 0),
-                                         index = map_inh_ttype.index,
-                                         columns = map_inh_ttype.columns)
+    map_inh_ttype_binary = make_inh_map_binary(path_to_inh_map_L1, path_to_inh_map_L26)
     
     msk_clstr_Lamp5 = [('Lamp5' in c) for c in medians.columns]
     msk_clstr_Sncg = [('Sncg' in c) for c in medians.columns]
@@ -216,5 +228,5 @@ if __name__ == "__main__":
             df = generate_panda(IC_data, ttype)
             compatible_inh_profiles[me_type][ttype] = {'values': df.values.tolist(), 'index': df.index.tolist(), 'columns': df.columns.tolist()}
     
-    with open('/Users/yroussel/Desktop/NCMv3/inh_compatible_profiles.json', 'w') as fp:
+    with open('./output/inh_compatible_profiles.json', 'w') as fp:
         json.dump(compatible_inh_profiles, fp)
