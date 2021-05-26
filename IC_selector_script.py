@@ -158,6 +158,38 @@ def make_inh_map_binary(path_to_inh_map_L1, path_to_inh_map_L26):
                                          columns = map_inh_ttype.columns)
     return map_inh_ttype_binary
 
+def combine_exc_inh_data(IC_data_exc, IC_data_inh):
+    level_1 = []
+    level_2 = []
+    level_3 = []
+    df_list = []
+
+    for x in IC_data_exc.keys():
+        for y in IC_data_exc[x].keys():
+            level_1 += [x + "_cAC"] * len(IC_data_exc[x][y]['columns'])
+            level_2 += [y] * len(IC_data_exc[x][y]['columns'])
+            level_3 += IC_data_exc[x][y]['columns']
+            df = generate_panda(IC_data_exc[x], y)
+            df_list.append(df)
+    for x in IC_data_inh.keys():
+        for y in IC_data_inh[x].keys():
+            level_1 += [x] * len(IC_data_inh[x][y]['columns'])
+            level_2 += [y] * len(IC_data_inh[x][y]['columns'])
+            level_3 += IC_data_inh[x][y]['columns']
+            df = generate_panda(IC_data_inh[x], y)
+            df_list.append(df)        
+
+    arrays = [level_1, level_2, level_3]
+    idx = pd.MultiIndex.from_arrays(arrays, names=('me-type', 't-type', 'modality'))
+
+    res = pd.DataFrame(
+        pd.concat(df_list, axis=1).T.values,
+        columns= df.index,
+        index = idx)
+    
+    return res
+
+
 if __name__ == "__main__":
     
     medians = pd.read_csv(path_to_scRNAseq_data, index_col=0)
@@ -230,3 +262,8 @@ if __name__ == "__main__":
     
     with open('./output/inh_compatible_profiles.json', 'w') as fp:
         json.dump(compatible_inh_profiles, fp)
+        
+    combined_data = combine_exc_inh_data(compatible_profiles, compatible_inh_profiles)
+    combined_data.to_csv("./output/met_type_ion_channel_gene_expression.csv")
+        
+        
