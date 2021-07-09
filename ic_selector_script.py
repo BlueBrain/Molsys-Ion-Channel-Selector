@@ -26,12 +26,16 @@ def count_elements(array):
     return pd.DataFrame([len(array[[y == x for y in array]]) for x in unq], index=unq, columns=['counts'])
 
 
-def sigmoid_f(x, a, mu):
-    return 1 / (1 + np.exp(-a*(x - mu)))
+def sigmoid_f(x, constant, mu):
+    """
+    """
+    return 1 / (1 + np.exp(-constant*(x - mu)))
 
 
-def gaussian_f(x, a, mu, sigma):
-    return a * np.exp(-((x - mu)**2 / (2*sigma**2)))
+def gaussian_f(x, constant, mu, sigma):
+    """
+    """
+    return constant * np.exp(-((x - mu)**2 / (2*sigma**2)))
 
 
 def generate_panda(data, t_type):
