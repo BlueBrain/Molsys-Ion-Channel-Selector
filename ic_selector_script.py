@@ -1,4 +1,7 @@
-#####
+# Author: Yann Roussel <yann.roussel@epfl.ch>
+#
+# License: 
+
 import json
 
 import pandas as pd
@@ -17,25 +20,29 @@ path_to_inh_map_L26 = './input/P(BBPmarker_metype)_L26_(Gouw+pseq_BBP)April_16_2
 
 def count_elements(array):
     """
-    Return as and pandas DataFrame unique elements and the associated counts of an array.
-    :param array:
-    :return:
+    Return as a panda DataFrame unique elements and the associated counts of an array.
+    :param array: numpy arrray
+    :return: panda dataframe with unique element names as indexes and counts as values 
     """
     unq = np.unique(array)
 
     return pd.DataFrame([len(array[[y == x for y in array]]) for x in unq], index=unq, columns=['counts'])
 
 
-def sigmoid_f(x, a, mu):
-    return 1 / (1 + np.exp(-a*(x - mu)))
+def sigmoid_f(x, constant, mu):
+    """
+    """
+    return 1 / (1 + np.exp(-constant*(x - mu)))
 
 
-def gaussian_f(x, a, mu, sigma):
-    return a * np.exp(-((x - mu)**2 / (2*sigma**2)))
+def gaussian_f(x, constant, mu, sigma):
+    """
+    """
+    return constant * np.exp(-((x - mu)**2 / (2*sigma**2)))
 
 
 def generate_panda(data, t_type):
-    """ generate a panda data frame for a given t-type from the json"""
+    """Generate a panda DataFrame for a given t-type from the json."""
     data_df = pd.DataFrame(data[t_type]['values'],
                            index=data[t_type]['index'],
                            columns=data[t_type]['columns'])
@@ -44,7 +51,7 @@ def generate_panda(data, t_type):
 
 def preprocess_df(data_df):
     """
-
+    Split raw data into different cell classes.
     :param data_df:
     :return:
     """
