@@ -1,10 +1,18 @@
+# Author: Yann Roussel <yann.roussel@epfl.ch>
+#
+# License:
+"""
+This script download from NEXUS all the required input files for the ic_selector_script.py.
+Dependencies: pandas, getpass and kgforge
+"""
+
+import getpass
+import pandas as pd
+
 from kgforge.core import KnowledgeGraphForge
 from kgforge.core import Resource
 from kgforge.specializations.resources import Dataset
 
-import pandas as pd
-
-import getpass
 
 ### TO DO: change the way of getting TOKEN
 print("enter your Nexus password")

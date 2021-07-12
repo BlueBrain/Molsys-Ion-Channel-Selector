@@ -1,10 +1,18 @@
+# Author: Yann Roussel <yann.roussel@epfl.ch>
+#
+# License:
+"""
+This script upload the output files from the ic_selector_script.py to NEXUS.
+Dependencies: pandas, getpass and kgforge
+"""
+
+import getpass
+import pandas as pd
+
 from kgforge.core import KnowledgeGraphForge
 from kgforge.core import Resource
 from kgforge.specializations.resources import Dataset
 
-import pandas as pd
-
-import getpass
 
 ### TO DO: change the way of getting TOKEN
 TOKEN = getpass.getpass()
