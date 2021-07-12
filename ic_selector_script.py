@@ -1,48 +1,37 @@
-# Author: Yann Roussel <yann.roussel@epfl.ch>
-#
-# License: 
-
+#####
 import json
 
 import pandas as pd
 import numpy as np
 
 
-# Resoures
+# Resources
 
-path_to_scRNAseq_data = './input/medians.csv'
-path_to_selected_channels = './input/Channels_genes_(correspondance_channels)_v2.csv'
-path_to_BBP_m_type_list = './input/BBP_mtype_list.csv'
-
-path_to_inh_map_L1 = './input/P(BBPmarker_metype)_L1_(Gouw+pseq_BBP)April_16_2021.csv'
-path_to_inh_map_L26 = './input/P(BBPmarker_metype)_L26_(Gouw+pseq_BBP)April_16_2021.csv'
+PATH_TO_SC_RNA_SEQ_DATA = './input/medians.csv'
+PATH_TO_SELECTED_CHANNELS = './input/Channels_genes_(correspondance_channels)_v2.csv'
+PATH_TO_BBP_M_TYPE_LIST = './input/BBP_mtype_list.csv'
+PATH_TO_INH_MAP_L1 = './input/P(BBPmarker_metype)_L1_(Gouw+pseq_BBP)April_16_2021.csv'
+PATH_TO_INH_MAP_L26 = './input/P(BBPmarker_metype)_L26_(Gouw+pseq_BBP)April_16_2021.csv'
 
 
 def count_elements(array):
     """
-    Return as a panda DataFrame unique elements and the associated counts of an array.
-    :param array: numpy arrray
-    :return: panda dataframe with unique element names as indexes and counts as values 
+    Return as and pandas DataFrame unique elements and the associated counts of an array.
+    :param array: array of elements
+    :return: panda DataFrame
     """
     unq = np.unique(array)
 
     return pd.DataFrame([len(array[[y == x for y in array]]) for x in unq], index=unq, columns=['counts'])
 
 
-def sigmoid_f(x, constant, mu):
-    """
-    """
-    return 1 / (1 + np.exp(-constant*(x - mu)))
-
-
-def gaussian_f(x, constant, mu, sigma):
-    """
-    """
-    return constant * np.exp(-((x - mu)**2 / (2*sigma**2)))
-
-
 def generate_panda(data, t_type):
-    """Generate a panda DataFrame for a given t-type from the json."""
+    """
+    Generate a panda DataFrame for a given t-type from the dictionary of channel expression""
+    :param data: dictionary of channel expression with t-types as keys
+    :param t_type: string, t-type name
+    :return: panda DataFrame
+    """
     data_df = pd.DataFrame(data[t_type]['values'],
                            index=data[t_type]['index'],
                            columns=data[t_type]['columns'])
@@ -51,9 +40,10 @@ def generate_panda(data, t_type):
 
 def preprocess_df(data_df):
     """
-    Split raw data into different cell classes.
-    :param data_df:
-    :return:
+    Split scRNAseq data into major classes of neuronal cells
+    :param data_df: panda DataFrame
+    :return: panda DataFrames for all neuronal cells, inhibitory neurons, excitatory neurons
+    and non-neuronal cells
     """
     dict_class = {}
     for x in data_df.index:
@@ -81,9 +71,10 @@ def preprocess_df(data_df):
 
 def make_binary(data_df, thresholding="zero"):
     """
+    Make scRNAseq data (i.e. RNA counts) binary by applying a threshold ('zero' or '1_percent')
     :param data_df: panda Data Frame of single cell RNA seq data
     :param thresholding: {'zero', '1_percent'}, default='zero'
-    :return: binary_df
+    :return: panda DataFrame, gene as columns and t-type as index.
     # TO DO: Implement gaussian thresh
     """
     binary = []
@@ -107,9 +98,10 @@ def make_binary(data_df, thresholding="zero"):
 
 def compute_default_distribution_file(binary_df):
     """
-
-    :param binary_df:
-    :return:
+    Compute a panda DataFrame of the same shape than binary_df (gene as columns and t-type as index)
+    with 'uniform' string as values.
+    :param binary_df: panda DataFrame
+    :return: panda DataFrame
     """
     distribution_df = pd.DataFrame(
         np.asarray([['uniform']*len(binary_df.columns)]*len(binary_df.index)),
@@ -120,9 +112,10 @@ def compute_default_distribution_file(binary_df):
 
 def compute_default_g_bar_values(binary_df):
     """
-
-    :param binary_df:
-    :return:
+    Compute a panda DataFrame of the same shape than binary_df (gene as columns and t-type as index)
+    with default maximal g_bar values (when available). Values taken from Darshan Mandge (Cells team).
+    :param binary_df: panda DataFrame
+    :return: panda DataFrame
     """
     g_bar_vals = []
 
@@ -145,11 +138,12 @@ def compute_default_g_bar_values(binary_df):
 
 def compute_ic_data(binary_df, distribution_df, g_bar_df):
     """
-
-    :param binary_df:
-    :param distribution_df:
-    :param g_bar_df:
-    :return:
+    Compute a panda dictionary merging presence, distribution and max g_bar values of ion channels for
+    all t-types in somatic, dendritic and axonic sections.
+    :param binary_df: panda DataFrame
+    :param distribution_df: panda DataFrame
+    :param g_bar_df: panda DataFrame
+    :return: panda DataFrame
     """
     ic_data = {}
     for t_type in binary_df.index:
@@ -169,10 +163,11 @@ def compute_ic_data(binary_df, distribution_df, g_bar_df):
 
 def compute_default_exc_map(path_to_bbp_m_type_list, t_type_list):
     """
-
-    :param path_to_bbp_m_type_list:
-    :param t_type_list:
-    :return:
+    Compute binary map between excitatory t-types and excitatory BBP me-types. Mapping based on layers
+    (e.g. all layer 2/3 t-types are mapped with all me-type from layer 2/3)
+    :param path_to_bbp_m_type_list: string
+    :param t_type_list: list of t-types names as strings
+    :return: dictionary
     """
     bbp_m_types = pd.read_csv(path_to_bbp_m_type_list, index_col=0)['m-type'].values
     msk_exc_bbp = np.asarray([('TPC' in x) | ('BPC' in x) | ('UPC' in x) | ('IPC' in x) | ('SSC' in x) | ('HPC' in x)
@@ -203,10 +198,12 @@ def compute_default_exc_map(path_to_bbp_m_type_list, t_type_list):
 
 def make_inh_map_binary(path_to_inh_map_l1, path_to_inh_map_l26):
     """
-
-    :param path_to_inh_map_l1:
-    :param path_to_inh_map_l26:
-    :return:
+    Convert probabilistic mapping  between inhibitory t-types and inhibitory me-types
+    into binary map by applying a zero threshold.
+    Original probabilistic mapping  was obtained from the "cross-species mapping" pipeline
+    :param path_to_inh_map_l1: string
+    :param path_to_inh_map_l26: string
+    :return: dictionary
     """
     map_inh_t_type_l1 = pd.read_csv(path_to_inh_map_l1, index_col=0)
     map_inh_t_type_l26 = pd.read_csv(path_to_inh_map_l26, index_col=0)
@@ -221,10 +218,10 @@ def make_inh_map_binary(path_to_inh_map_l1, path_to_inh_map_l26):
 
 def combine_exc_inh_data(ic_data_exc, ic_data_inh):
     """
-
-    :param ic_data_exc:
-    :param ic_data_inh:
-    :return:
+    Combine data from excitatory and inhibitory neurons in a single panda DataFrame.
+    :param ic_data_exc: dictionary
+    :param ic_data_inh: dictionary
+    :return: panda DataFrame
     """
     level_1 = []
     level_2 = []
@@ -260,8 +257,8 @@ def combine_exc_inh_data(ic_data_exc, ic_data_inh):
 
 if __name__ == "__main__":
     
-    medians = pd.read_csv(path_to_scRNAseq_data, index_col=0)
-    Channels_genes = pd.read_csv(path_to_selected_channels, index_col='gene_symbol')
+    medians = pd.read_csv(PATH_TO_SC_RNA_SEQ_DATA, index_col=0)
+    Channels_genes = pd.read_csv(PATH_TO_SELECTED_CHANNELS, index_col='gene_symbol')
     msk_genes = [g in Channels_genes.index.tolist() for g in medians.index]
     expr_df = medians.T[medians.index[msk_genes]]
     expr_nrn_df = preprocess_df(expr_df)[0]
@@ -276,7 +273,7 @@ if __name__ == "__main__":
     ttype_list = [x for x in IC_data.keys()]
     subclass_list = np.unique([x.split('_')[0] for x in IC_data.keys()])
 
-    map_exc_ttype = compute_default_exc_map(path_to_BBP_m_type_list, ttype_list)
+    map_exc_ttype = compute_default_exc_map(PATH_TO_BBP_M_TYPE_LIST, ttype_list)
     
     with open('./output/map_exc_ttype.json', 'w') as fp:
         json.dump(map_exc_ttype, fp)
@@ -293,7 +290,7 @@ if __name__ == "__main__":
     with open('./output/exc_compatible_profiles.json', 'w') as fp:
         json.dump(compatible_profiles, fp)
     
-    map_inh_ttype_binary = make_inh_map_binary(path_to_inh_map_L1, path_to_inh_map_L26)
+    map_inh_ttype_binary = make_inh_map_binary(PATH_TO_INH_MAP_L1, PATH_TO_INH_MAP_L26)
     
     msk_clstr_Lamp5 = [('Lamp5' in c) for c in medians.columns]
     msk_clstr_Sncg = [('Sncg' in c) for c in medians.columns]
