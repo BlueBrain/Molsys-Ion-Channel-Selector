@@ -7,7 +7,6 @@ Dependencies: pandas, getpass and kgforge
 """
 
 import getpass
-import pandas as pd
 
 from kgforge.core import KnowledgeGraphForge
 from kgforge.core import Resource
@@ -16,6 +15,7 @@ from kgforge.specializations.resources import Dataset
 
 ### TO DO: change the way of getting TOKEN
 TOKEN = getpass.getpass()
+# TOKEN = ""
 
 
 nexus_endpoint = "https://bbp.epfl.ch/nexus/v1" # production environment

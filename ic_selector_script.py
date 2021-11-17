@@ -13,6 +13,8 @@ PATH_TO_BBP_M_TYPE_LIST = './input/BBP_mtype_list.csv'
 PATH_TO_INH_MAP_L1 = './input/P(BBPmarker_metype)_L1_(Gouw+pseq_BBP)April_16_2021.csv'
 PATH_TO_INH_MAP_L26 = './input/P(BBPmarker_metype)_L26_(Gouw+pseq_BBP)April_16_2021.csv'
 
+IC_CONSTRAINTS = pd.read_csv('./Ion_Channel_Constraints-Area_and_Conductance.csv', index_col=["Gene name"])
+
 
 def count_elements(array):
     """
@@ -110,7 +112,7 @@ def compute_default_distribution_file(binary_df):
     return distribution_df
 
 
-def compute_default_g_bar_values(binary_df):
+def compute_default_g_bar_values(binary_df, ion_channels_constraints):
     """
     Compute a panda DataFrame of the same shape than binary_df (gene as columns and t-type as index)
     with default maximal g_bar values (when available). Values taken from Darshan Mandge (Cells team).
@@ -120,19 +122,25 @@ def compute_default_g_bar_values(binary_df):
     g_bar_vals = []
 
     for gene in binary_df.columns:
-        if "Scn" in gene:
-            g_bar_vals.append(0.5)
-        elif "Kcn" in gene:
-            g_bar_vals.append(0.005)
-        elif "Hcn" in gene:
-            g_bar_vals.append(1e-4)
-        else:
-            g_bar_vals.append(np.nan)
+        try:
+            if ion_channels_constraints["Maximal Conductance (S/cm²)"][gene.upper()]:
+                v_ = ion_channels_constraints["Maximal Conductance (S/cm²)"][gene.upper()]
+                g_bar_vals.append(float(v_.replace(",", ".")))
+        except:
+            if "Scn" in gene:
+                g_bar_vals.append(0.5)
+            elif "Kcn" in gene:
+                g_bar_vals.append(0.005)
+            elif "Hcn" in gene:
+                g_bar_vals.append(1e-4)
+            else:
+                g_bar_vals.append(np.nan)
 
     g_bar_df = pd.DataFrame(
         np.asarray([g_bar_vals] * len(binary_df.index)),
         columns=binary_df.columns,
         index=binary_df.index)
+
     return g_bar_df
 
 
@@ -264,7 +272,7 @@ if __name__ == "__main__":
     expr_nrn_df = preprocess_df(expr_df)[0]
     Binary_0thresh_df = make_binary(expr_nrn_df)
     Distribution_df = compute_default_distribution_file(Binary_0thresh_df)
-    g_bars_df = compute_default_g_bar_values(Binary_0thresh_df)
+    g_bars_df = compute_default_g_bar_values(Binary_0thresh_df, IC_CONSTRAINTS)
     IC_data = compute_ic_data(Binary_0thresh_df, Distribution_df, g_bars_df)
 
     with open('./output/t_types_IC_expression.json', 'w') as fp:

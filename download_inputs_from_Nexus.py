@@ -7,16 +7,15 @@ Dependencies: pandas, getpass and kgforge
 """
 
 import getpass
-import pandas as pd
 
 from kgforge.core import KnowledgeGraphForge
-from kgforge.core import Resource
-from kgforge.specializations.resources import Dataset
+
 
 
 ### TO DO: change the way of getting TOKEN
 print("enter your Nexus password")
 TOKEN = getpass.getpass()
+# TOKEN = ""
 print("password taken")
 
 
@@ -31,7 +30,7 @@ forge = KnowledgeGraphForge("https://raw.githubusercontent.com/BlueBrain/nexus-f
                            token= TOKEN,
                            debug=True
                            )
-name_list = ["BBP_mtype_list", "mouse-whole-cortex-and-hippocampus-smart-seq",
+name_list = ["mouse-whole-cortex-and-hippocampus-smart-seq", "BBP_mtype_list",
              "P(marker_BBPmetype)_L1", "P(marker_BBPmetype)_L23_L6"]
 
 for name in name_list:
