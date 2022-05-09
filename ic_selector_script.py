@@ -1,4 +1,8 @@
-#####
+"""ic selector script
+
+This script allows to provide the channel related genes expression profiles
+for all met-types.
+"""
 import json
 
 import pandas as pd
