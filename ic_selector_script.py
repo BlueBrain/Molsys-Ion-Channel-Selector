@@ -117,6 +117,7 @@ def compute_default_g_bar_values(binary_df, ion_channels_constraints):
     Compute a panda DataFrame of the same shape than binary_df (gene as columns and t-type as index)
     with default maximal g_bar values (when available). Values taken from Darshan Mandge (Cells team).
     :param binary_df: panda DataFrame
+    :param ion_channels_constraints: panda DataFrame
     :return: panda DataFrame
     """
     g_bar_vals = []
