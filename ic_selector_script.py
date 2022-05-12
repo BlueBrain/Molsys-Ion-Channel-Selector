@@ -272,6 +272,7 @@ if __name__ == "__main__":
     
     medians = pd.read_csv(PATH_TO_SC_RNA_SEQ_DATA, index_col=0)
     Channels_genes = pd.read_csv(PATH_TO_SELECTED_CHANNELS, index_col='gene_symbol')
+    Channels_genes = Channels_genes.rename({'Scn2a1': 'Scn2a', 'Clcn4-2': 'Clcn4'}, axis=0).drop('Clca4c-ps', axis=0)
     msk_genes = [g in Channels_genes.index.tolist() for g in medians.index]
     expr_df = medians.T[medians.index[msk_genes]]
     expr_nrn_df = preprocess_df(expr_df)[0]

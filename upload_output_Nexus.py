@@ -36,7 +36,7 @@ my_data_distribution = forge.attach("./output/met_type_ion_channel_gene_expressi
 # brainLocation as a Resource => so that you can do #my_dataset.brainLocation.brainRegion
 brainRegion = Resource(label="Isocortex")
 brainLocation = Resource(brainRegion=brainRegion)
- 
+
 my_dataset = Dataset(forge, type=["Entity","Dataset", "RNASequencing"],
                      name="Mouse_met_types_ion_channel_expression",
                      brainLocation = brainLocation,
