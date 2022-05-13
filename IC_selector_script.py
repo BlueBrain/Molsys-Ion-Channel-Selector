@@ -162,6 +162,7 @@ if __name__ == "__main__":
     
     medians = pd.read_csv(path_to_scRNAseq_data, index_col=0)
     Channels_genes = pd.read_csv(path_to_selected_channels, index_col = 'gene_symbol')
+    Channels_genes = Channels_genes.rename({'Scn2a1': 'Scn2a', 'Clcn4-2': 'Clcn4'}, axis=0).drop('Clca4c-ps', axis=0)
     msk_genes = [g in Channels_genes.index.tolist() for g in medians.index]
     X_df = medians.T[medians.index[msk_genes]]
     
