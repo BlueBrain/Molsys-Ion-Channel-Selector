@@ -2,12 +2,33 @@
 import pandas as pd
 import numpy as np
 import json
-import mygene
+import getpass
+
+from kgforge.core import KnowledgeGraphForge
+
+
+def dl_rna_seq_data():
+  # If this doesn't work, you can always paste the token as a string
+  token = getpass.getpass()
+  
+
+  # Initialize a forge session in the right bucket
+  forge = KnowledgeGraphForge('https://raw.githubusercontent.com/BlueBrain/nexus-forge/master/examples/notebooks/use-cases/prod-forge-nexus.yml', bucket='bbp/ncmv3', token=token)
+
+  data = forge.search({'type': 'Dataset',
+                    'contribution':{
+                        'agent': {'familyName': 'Roussel'}
+                    },
+                    'distribution': {'encodingFormat': 'application/csv'}
+                    })
+
+  dirpath = "./downloaded/"
+  forge.download(data, path=dirpath)
 
 # Resoures
 
 # path_to_scRNAseq_data = './input/medians.csv'
-path_to_scRNAseq_data = './input/Yao_et_al_trim_mean25.csv'
+path_to_scRNAseq_data = './downloaded/Yao_et_al_trim_mean25.csv'
 path_to_selected_channels = './input/Channels_genes_(correspondance_channels)_v2.csv'
 path_to_BBP_m_type_list = './input/BBP_mtype_list.csv'
 
@@ -188,6 +209,7 @@ def make_inh_map_binary(path_to_inh_map_L1, path_to_inh_map_L26):
 
 if __name__ == "__main__":
     
+    dl_rna_seq_data()
     medians = pd.read_csv(path_to_scRNAseq_data, index_col=0)
     Channels_genes = pd.read_csv(path_to_selected_channels, index_col = 'gene_symbol')
     Channels_genes = Channels_genes.rename({'Scn2a1': 'Scn2a', 'Clcn4-2': 'Clcn4'}, axis=0).drop('Clca4c-ps', axis=0)
