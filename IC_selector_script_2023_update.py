@@ -3,14 +3,32 @@ import pandas as pd
 import numpy as np
 import json
 import getpass
+import os
 
 from kgforge.core import KnowledgeGraphForge
 
+def create_directory(directory_path):
+    """
+    Create a new directory at the specified path if it does not exist.
+
+    Parameters:
+    directory_path : str
+        Path to the directory to be created.
+
+    Returns:
+    None
+    """
+    # Check if the directory already exists
+    if not os.path.exists(directory_path):
+        # Create the directory
+        os.makedirs(directory_path)
+        print(f"Directory '{directory_path}' created successfully.")
+    else:
+        print(f"Directory '{directory_path}' already exists.")
 
 def dl_rna_seq_data():
   # If this doesn't work, you can always paste the token as a string
   token = getpass.getpass()
-  
 
   # Initialize a forge session in the right bucket
   forge = KnowledgeGraphForge('https://raw.githubusercontent.com/BlueBrain/nexus-forge/master/examples/notebooks/use-cases/prod-forge-nexus.yml', bucket='bbp/ncmv3', token=token)
@@ -225,6 +243,7 @@ if __name__ == "__main__":
     
     IC_data = compute_IC_data(Binary_0thresh_df, Distribution_df)
     
+    create_directory('./output')
 
     with open('./output/t_types_IC_expression.json', 'w') as fp:
         json.dump(IC_data, fp)
