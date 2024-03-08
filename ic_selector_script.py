@@ -11,7 +11,8 @@ import numpy as np
 
 # Resources
 
-PATH_TO_SC_RNA_SEQ_DATA = './input/medians.csv'
+# PATH_TO_SC_RNA_SEQ_DATA = './input/medians.csv'
+PATH_TO_SC_RNA_SEQ_DATA = './input/Yao_et_al_trim_mean25.csv'
 PATH_TO_SELECTED_CHANNELS = './input/Channels_genes_(correspondance_channels)_v2.csv'
 PATH_TO_BBP_M_TYPE_LIST = './input/BBP_mtype_list.csv'
 PATH_TO_INH_MAP_L1 = './input/P(BBPmarker_metype)_L1_(Gouw+pseq_BBP)April_16_2021.csv'
@@ -51,16 +52,27 @@ def preprocess_df(data_df):
     :return: panda DataFrames for all neuronal cells, inhibitory neurons, excitatory neurons
     and non-neuronal cells
     """
-    dict_class = {}
+    # dict_class = {}
+    # for x in data_df.index:
+    #     if ('Lamp5' in x) | ('Sncg' in x) | ('Serpinf1' in x) | ('Vip' in x) | ('Sst' in x) | ('Pvalb' in x):
+    #         dict_class[x] = 'GABAergic'
+    #     elif ('IT' in x) | ('Car3' in x) | ('ET' in x) | ('NP' in x) | ('CT' in x) | ('L6b' in x) | ('Ly6g6e' in x):
+    #         dict_class[x] = 'Glutamatergic'
+    #     elif 'CA' in x:
+    #         dict_class[x] = 'Hippocampus'
+    #     else:
+    #         dict_class[x] = 'Non-neuronal'
+
+    dict_class={}
     for x in data_df.index:
-        if ('Lamp5' in x) | ('Sncg' in x) | ('Serpinf1' in x) | ('Vip' in x) | ('Sst' in x) | ('Pvalb' in x):
-            dict_class[x] = 'GABAergic'
-        elif ('IT' in x) | ('Car3' in x) | ('ET' in x) | ('NP' in x) | ('CT' in x) | ('L6b' in x) | ('Ly6g6e' in x):
-            dict_class[x] = 'Glutamatergic'
-        elif 'CA' in x:
-            dict_class[x] = 'Hippocampus'
+        if ('Gaba' in x):
+            dict_class[x]='GABAergic'
+        elif ('Glut' in x):
+            dict_class[x]='Glutamatergic'
+        elif ('Chol' in x)|('Dopa' in x)|('Sero' in x)|('Gly' in x)|('Glyc' in x)|('Hist' in x):
+            dict_class[x]='modulatory'
         else:
-            dict_class[x] = 'Non-neuronal'
+            dict_class[x]='Non-neuronal'
 
     msk_0 = [(c == 'Glutamatergic') | (c == 'GABAergic') for c in data_df.rename(index=dict_class).index]
     msk_1 = [c == 'GABAergic' for c in data_df.rename(index=dict_class).index]
