@@ -12,7 +12,7 @@ import numpy as np
 # Resources
 
 # PATH_TO_SC_RNA_SEQ_DATA = './input/medians.csv'
-PATH_TO_SC_RNA_SEQ_DATA = './input/Yao_et_al_trim_mean25.csv'
+PATH_TO_SC_RNA_SEQ_DATA = './input/Yao_et_al_trim_mean25.csv.20240325101358'
 PATH_TO_SELECTED_CHANNELS = './input/Channels_genes_(correspondance_channels)_v2.csv'
 PATH_TO_BBP_M_TYPE_LIST = './input/BBP_mtype_list.csv'
 PATH_TO_INH_MAP_L1 = './input/P(BBPmarker_metype)_L1_(Gouw+pseq_BBP)April_16_2021.csv'
