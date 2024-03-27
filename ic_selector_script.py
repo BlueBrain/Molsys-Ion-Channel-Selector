@@ -255,7 +255,7 @@ def combine_exc_inh_data(ic_data_exc, ic_data_inh):
 
     for x in ic_data_exc.keys():
         for y in ic_data_exc[x].keys():
-            level_1 += [x + "_cAC"] * len(ic_data_exc[x][y]['columns'])  # Same e-type for all excitatory neurons: cAC
+            level_1 += [x + "_cADpyr"] * len(ic_data_exc[x][y]['columns'])  # Same e-type for all excitatory neurons: cADpyr
             level_2 += [y] * len(ic_data_exc[x][y]['columns'])
             level_3 += ic_data_exc[x][y]['columns']
             expression_df = generate_panda(ic_data_exc[x], y)
